@@ -1,7 +1,0 @@
-nil
-clj꞉advent-of-code-2020.day-01.report-repair꞉> 
-; Syntax error compiling at (src/advent_of_code_2020/day-01/report-repair.clj:4:1).
-; Unable to resolve symbol: « in this context
-clj꞉advent-of-code-2020.day-01.report-repair꞉> 
-#'advent-of-code-2020.day-01.report-repair/entries-sum-2
-clj꞉advent-of-code-2020.day-01.report-repair꞉> 
