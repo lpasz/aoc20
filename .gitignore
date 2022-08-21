@@ -14,3 +14,6 @@ pom.xml.asc
 .lsp
 .calva
 .clj-kondo
+/.clj-kondo
+src/advent-of-code-2020/day-04/passport-processing.clj
+.clj-kondo/
