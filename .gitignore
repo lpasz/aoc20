@@ -17,3 +17,4 @@ pom.xml.asc
 /.clj-kondo
 src/advent-of-code-2020/day-04/passport-processing.clj
 .clj-kondo/
+.cpcache/
