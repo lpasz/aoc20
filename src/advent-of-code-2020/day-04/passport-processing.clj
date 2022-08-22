@@ -17,9 +17,13 @@
   (->> (str/split text #"\n\n")
        (map passport-entry-text->map)))
 
-(defn passport? [passport] (every? (set (keys passport)) req-keys))
+(defn valid-passport? [passport] (every? (set (keys passport)) req-keys))
 
-(defn valid? [text] (count (filter passport? (to-passport-map text))))
+(defn count-valid [text] (->> (to-passport-map text)
+                              (filter valid-passport?)
+                              (count)))
+
+(= 254 (count-valid input))
 
 (defn between? [n this that] (and (>= n this) (>= that n)))
 
@@ -34,7 +38,7 @@
 
 (defn hgt? [passport measure] (str/ends-with? (:hgt passport) measure))
 
-(defn ->int [passport] (some->> passport :hgt (re-find #"\d+") read-string))
+(defn ->int [hgt] (some->> hgt (re-find #"\d+") (read-string)))
 
 (defn valid-hgt? [passport]
   (cond
@@ -51,15 +55,19 @@
 (defn valid-pid? [passport]
   (some->> passport :pid (re-matches #"[0-9]{9}")))
 
-(defn full-valid? [text]
+(defn full-valid-valid-passport? [passport]
+  (and (valid-passport? passport)
+       (valid-byr? passport)
+       (valid-eyr? passport)
+       (valid-hgt? passport)
+       (valid-iyr? passport)
+       (valid-hcl? passport)
+       (valid-ecl? passport)
+       (valid-pid? passport)))
+
+(defn count-full-valid [text]
   (->> (to-passport-map text)
-       (filter passport?)
-       (filter valid-byr?)
-       (filter valid-eyr?)
-       (filter valid-hgt?)
-       (filter valid-iyr?)
-       (filter valid-hcl?)
-       (filter valid-ecl?)
-       (filter valid-pid?)
+       (filter full-valid-valid-passport?)
        (count)))
 
+(count-full-valid input)
