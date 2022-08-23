@@ -1,41 +1,37 @@
 (ns advent-of-code-2020.day-05.binary-boarding
   (:require [clojure.string :as str]))
 
-(def rows (into [] (range 1 (inc 127))))
-(def columns (into [] (range 1 (inc 7))))
-(def seats {:rows rows :cols columns})
+(defn to-binary-str [text]
+  (->> (seq text) (map {\F 0 \L 0 \B 1 \R 1}) (str/join)))
 
-(defn to-instructions [text]
-  (->> (seq text)
-       (map #(cond (= \L %) :left
-                   (= \R %) :right
-                   (= \F %) :front
-                   (= \B %) :back))))
+(defn to-row-n-col [text]
+  (let [[row col] (into [] (map (comp str/join to-binary-str) (partition 7 7 [] text)))]
+    {:row (Integer/parseInt row 2) :col (Integer/parseInt col 2)}))
 
-(defn narrow-down [x {:keys [rows cols] :as seats}]
-  (cond (= x :front) (assoc seats :rows (take (quot (count rows) 2) rows))
-        (= x :back) (assoc seats :rows (drop (quot (count rows) 2) rows))
-        (= x :left) (assoc seats :cols (take (quot (inc (count cols)) 2) cols))
-        (= x :right) (assoc seats :cols (drop (quot (count cols) 2) cols))))
-
-(defn row-n-seat [text]
-  (->> (to-instructions text)
-       (reduce #(narrow-down %2 %1) seats)))
-
-(defn seat-id [text]
-  (->> (row-n-seat text)
-       (#(let [[row] (:rows %) [col] (:cols %)]
-           (-> (* row 8)
-               (+ col))))))
-
-(row-n-seat "FBFBBFFRLR")
-
-(= (seat-id "BFFFBBFRRR") 567)
-(= (seat-id "FFFBBBFRRR") 119)
-(= (seat-id "BBFFBBFRLL") 820)
+(defn to-seat-id [text]
+  (Integer/parseInt (to-binary-str text) 2))
 
 (def input (slurp "src/advent-of-code-2020/day-05/day-05.txt"))
 
-(apply max (map seat-id (str/split input #"\n")))
+(defn ex1 [] (->> (str/split input #"\n")
+                  (map to-seat-id)
+                  (apply max)))
 
-(apply max (map #((frequencies (seq %)) \B) (str/split input #"\n"))
+(ex1)
+
+(defn missing-one
+  ([ids] (missing-one (first ids) (rest ids)))
+  ([prev ids]
+   (if (= (inc prev) (first ids))
+     (recur (first ids) (rest ids))
+     (first ids))))
+
+(defn ex2 [] (->> (str/split input #"\n")
+                  (map to-seat-id)
+                  (sort)
+                  (partition 2 1)
+                  (filter #(= (inc (first %)) (dec (second %))))
+                  ((comp inc first first))))
+
+(ex2)
+
