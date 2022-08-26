@@ -27,12 +27,14 @@
 (-> ex to-code exec) ;; 5
 (-> inp to-code exec) ;; 2080
 
-(defn gen-var [origin]
-  (->> (map-indexed (fn [i v] [i v]) origin)
+
+(def change-op {:nop :jmp :jmp :nop :acc :acc})
+
+(defn gen-var [coll]
+  (->> (map-indexed (fn [i v] [i v]) coll)
        (reduce (fn [acc [i [op v]]]
-                 (if (#{:nop :jmp} op)
-                   (conj acc (assoc origin i [(if (= :nop op) :jmp :nop) v]))
-                   acc)) [])))
+                 (conj acc (assoc coll i [(op change-op) v]))) #{})))
+
 
 (defn success-version-acc [code]
   (->> code
