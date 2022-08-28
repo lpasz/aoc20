@@ -41,13 +41,16 @@
                      (assoc acc k [v])))
                  (sorted-map)))))
 
-(defn all-paths-available [path-map]
-  (reduce (fn [acc [k vs]]
-            (->> acc
-                 (mapcat (fn [a]
-                           (if (= k (last a))
-                             (map #(conj a %) vs) [a])))))
-          #{[0]} path-map))
+(defn paths-start-finish [path-map]
+  (reduce (fn [acc [key vals]]
+            (-> (reduce (fn [acc v]
+                          (if (acc v)
+                            (update acc v #(+ % (acc key)))
+                            (assoc acc v (acc key 1))))
+                        acc vals)
+                (dissoc key)))
+          {0 1}
+          path-map))
 
 (defn count-all-available-paths [source-jolt adapter-text]
   (->> (to-int-seq adapter-text)
@@ -55,7 +58,10 @@
        (jolt-charge-receiver)
        (sort)
        (all-jumps-available)
-       (all-paths-available)
-       (count)))
+       (paths-start-finish)
+       (vals)
+       (first)))
 
-(count-all-available-paths 0 inp)
+(count-all-available-paths 0 ex) ;; 8
+(count-all-available-paths 0 ex2) ;; 19208
+(count-all-available-paths 0 inp) ;; 9256148959232
