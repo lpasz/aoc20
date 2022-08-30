@@ -7,12 +7,10 @@
 
 (def free \L)
 (def occupied \#)
-(def floor \.)
 
 (defn to-seats [text]
   (->> (s/split text #"\n")
-       (map-indexed (fn [i vs]
-                      (map-indexed (fn [j v] [[i j] v]) vs)))
+       (map-indexed (fn [i vs] (map-indexed (fn [j v] [[i j] v]) vs)))
        (reduce (fn [acc xs]
                  (reduce (fn [acc [key val]]
                            (assoc acc key val)) acc xs))
@@ -58,12 +56,11 @@
         (recur next)))))
 
 (stabilized-seats (to-seats ex) round) ;; 37
-
 (stabilized-seats (to-seats inp) round) ;; 2319
 
 ;; PART 2
 
-(defn first-in-dir [direction [y x] seats]
+(defn- first-in-dir [direction [y x] seats]
   (->> (iterate inc 1)
        (map (fn [step]
               (cond
@@ -79,7 +76,7 @@
        (filter #(not= \. %))
        (first)))
 
-(defn first-in-all-dir [from seats]
+(defn- first-in-all-dir [from seats]
   (map #(first-in-dir % from seats) [:up :down :left :right :up-left :down-left :up-right :down-right]))
 
 (defn can-occupy-seat [[y x] seats]
