@@ -4,14 +4,6 @@
 (def ex (slurp "./src/advent-of-code-2020/day-12/day-12-ex.txt"))
 (def inp (slurp "./src/advent-of-code-2020/day-12/day-12.txt"))
 
-;; :N means to move north by the given value.
-;; :S means to move south by the given value.
-;; :E means to move east by the given value.
-;; :W means to move west by the given value.
-;; :L means to turn left the given number of degrees.
-;; :R means to turn right the given number of degrees.
-;; :F means to move forward by the given value in the direction the ship is currently facing.
-
 (def dir {:F :facing
           :R :right
           :L :left
@@ -25,8 +17,6 @@
        (map #(let [[_ action mag] (re-find #"([A-Z]+)(\d+)" %)]
                [((keyword action) dir) (Integer/parseInt mag)]))))
 
-(quot 180 90)
-
 (def directions [:east :south :west :north])
 
 (defn rotate [curr dir deg]
@@ -35,20 +25,43 @@
           ({:left 4 :right 0} dir)
           (.indexOf directions curr))))
 
-(to-inst ex)
-
-(defn where [{:keys [east west north south]}]
+(defn manhattan-distance [{:keys [east west north south]}]
   (+ (abs (- north south)) (abs (- east west))))
 
-(defn  manhattan-distance [text]
+(defn  calc-position-1 [text]
   (->> (to-inst text)
        (reduce (fn [{:keys [facing] :as acc} [action mag]]
-                     (cond
-                       (= action :facing) (update acc facing + mag)
-                       (#{:right :left} action) (update acc :facing (fn [_] (rotate facing action mag)))
-                       :else (update acc action + mag)))
-                   {:facing :east, :east 0, :north 0, :south 0, :west 0})
-       (where)))
+                 (cond
+                   (= action :facing) (update acc facing + mag)
+                   (#{:right :left} action) (update acc :facing (fn [_] (rotate facing action mag)))
+                   :else (update acc action + mag)))
+               {:facing :east, :east 0, :north 0, :south 0, :west 0})
+       (manhattan-distance)))
 
-(manhattan-distance ex) ;; 25
-(manhattan-distance inp);; 1319
+(calc-position-1 ex) ;; 25
+(calc-position-1 inp) ;; 1319
+
+(defn rotate-waypoint [waypoint dir deg]
+  (reduce (fn [acc [k v]] (assoc acc (rotate k dir deg) v)) {} waypoint))
+
+
+(defn  calc-position-2 [text]
+  (->> (to-inst text)
+       (reduce (fn [acc [action mag]]
+                 (cond
+                   (= :facing action) (reduce
+                                       (fn [acc key] (update-in acc [:ship key] #(+ % (* mag (key (:waypoint acc))))))
+                                       acc
+                                       directions)
+                   (#{:right :left} action) (update acc :waypoint #(rotate-waypoint % action mag))
+                   :else (update-in acc [:waypoint action] + mag)))
+
+               {:waypoint {:east 10, :north 1, :south 0, :west 0}
+                :ship {:east 0, :north 0, :south 0, :west 0}})
+       :ship
+       (manhattan-distance)))
+
+(calc-position-2 ex) ;; 286
+(calc-position-2 inp) ;; 62434
+
+
