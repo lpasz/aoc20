@@ -19,11 +19,8 @@
   (let [[_ match] (re-find #"(.*):" line)]
     [(keyword (s/replace match #" " "-")) (to-ranges line)]))
 
-(to-rule "bonk plane: 1-3 or 5-7")
-
 (defn to-rules [rules]
   (into {} (map to-rule rules)))
-
 
 (defn to-ticket [ticket]
   (->> (s/split (last ticket) #",")
@@ -57,8 +54,6 @@
          (filter (fn [val] (every? #(invalid-rule % val) rules)))
          (apply +))))
 
-(parse-ticket inp)
-
 (invalid-fields-sum ex1) ;; 71
 (invalid-fields-sum inp) ;; 22977
 
@@ -67,15 +62,8 @@
 (defn valid-ticket? [ticket rules]
   (nil? (some (fn [val] (every? #(invalid-rule % val) rules)) ticket)))
 
-
 (defn tranpose [m]
   (apply map vector m))
-
-(parse-ticket ex2)
-(parse-ticket inp)
-
-(let [[line & rest] [1]]
-  rest)
 
 (defn remove-tag [idx-groups tag-to-remove]
   (->> idx-groups
@@ -84,16 +72,6 @@
                         (filter (fn [[tag val]]
                                   (not= tag-to-remove tag))))]))))
 
-
-(def idx-group [[0 [[:class false] [:row true] [:seat false]]]
-                [1 [[:class true] [:row true] [:seat false]]]
-                [2 [[:class true] [:row true] [:seat true]]]])
-
-(remove-tag idx-group :seat)
-
-(defn i
-  ([x] (do (clojure.pprint/pprint x) x))
-  ([y x] (do (clojure.pprint/pprint {y x}) x)))
 
 (defn categorize [result [[idx in-groups] & rest]]
   (if-not (and (empty? in-groups) (empty? rest))
@@ -104,7 +82,9 @@
         (recur result (conj (vec rest) [idx in-groups]))))
     result))
 
-(categorize idx-group [])
+(defn satisfy-rules [ticket-line rules]
+  (map (fn [[rule-tag rule-set]]
+         [rule-tag (valid-ticket? ticket-line rule-set)]) rules))
 
 (defn discover-vals [text include]
   (let [ticket (parse-ticket text)
@@ -113,25 +93,11 @@
     (->> (concat (:other-tickets ticket) [(:my-ticket ticket)])
          (filter #(valid-ticket? % rules))
          (tranpose)
-         (map (fn [ticket-line]
-                (map (fn [[rule-tag rule-set]]
-                       [rule-tag (valid-ticket? ticket-line rule-set)]) (:rules ticket))))
-         (map-indexed (fn [i v] [i v]))
+         (map-indexed (fn [i v] [i (satisfy-rules v (:rules ticket))]))
          (categorize [])
-         (into {})
          (filter (fn [[k _]] (re-find include (str k))))
          (map (fn [[_ i]] (my-ticket i)))
          (apply *))))
 
-(re-find #"(class|row|seat)" "homer")
-
 (discover-vals ex2 #"(class|row|seat)") ;; 1716
-
 (discover-vals inp #"departure")
-
-(def my-ticket (:my-ticket (parse-ticket inp)))
-
-
-
-
-
