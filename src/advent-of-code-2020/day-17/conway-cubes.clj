@@ -20,7 +20,6 @@
        (cartesian-prod)
        (filter #(not= % coord))))
 
-
 (defn pocket-dimention [text n-dimentions]
   (->> (s/split-lines text)
        (keep-indexed (fn [y line]
@@ -30,24 +29,24 @@
        (partition n-dimentions)
        (set)))
 
-(pocket-dimention ex1 4)
-
 (defn count-atives [coord dimention]
   (->> coord
        (neighbors-coord)
        (filter dimention)
        (count)))
 
-(defn remain-active? [coord dimention]
+(defn will-remain-active? [coord dimention]
   (boolean (#{2 3} (count-atives coord dimention))))
 
-(defn activate? [coord dimention]
+(defn will-activate? [coord dimention]
   (boolean (#{3} (count-atives coord dimention))))
 
-(defn new-state [coord dimention]
-  (if (dimention coord)
-    (when (remain-active? coord dimention) coord)
-    (when (activate? coord dimention) coord)))
+(defn active? [coord dimention] (dimention coord))
+
+(defn will-be-active-coordinate [coord dimention]
+  (if (active? coord dimention)
+    (when (will-remain-active? coord dimention) coord)
+    (when (will-activate? coord dimention) coord)))
 
 (defn new-dimention [dimention]
   (->> dimention
@@ -57,11 +56,8 @@
 (defn do-cycle [dimention]
   (->> dimention
        (new-dimention)
-       (reduce (fn [acc coord]
-                 (if (new-state coord dimention)
-                   (conj acc coord)
-                   acc))
-               #{})))
+       (keep #(will-be-active-coordinate % dimention))
+       (set)))
 
 (defn after-n-cycles [n dimention]
   (reduce (fn [dimention _] (do-cycle dimention)) dimention (range n)))
