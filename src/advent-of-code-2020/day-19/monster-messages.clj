@@ -39,15 +39,17 @@
 (defn all-paths [start-node path]
   (let [nexts (path start-node)]
     (if (char? nexts)
-      nexts
+      (str nexts)
       (->> nexts
-           (map (fn [next]
-                  (->> next
-                       (map #(all-paths % path))
-                       ((fn [ns] 
-                          (if (every? char? ns)
-                            (apply str ns)
-                            (map #(apply str %) (cartesian-prod ns))))))))))))
+           (mapcat (fn [next]
+                     (->> next
+                          (map #(all-paths % path))
+                          ((fn [ns]
+                             (if (every? char? ns)
+                               (apply str ns)
+                               (map #(apply str %) (cartesian-prod ns))))))))))))
+
+
 
 ;; 4 -> [\a]
 ;; 5 -> [\b]
@@ -64,6 +66,7 @@
               4 \a,
               5 \b})
 
-(all-paths 0 rules)
+
+(filter (set (all-paths 0 rules)) messages)
 
 
