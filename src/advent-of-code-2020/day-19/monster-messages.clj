@@ -3,9 +3,7 @@
 
 (def inp (slurp "./src/advent-of-code-2020/day-19/inp.txt"))
 (def ex1 (slurp "./src/advent-of-code-2020/day-19/ex1.txt"))
-
-(def ex1-messages (second (s/split ex1 #"\n\n")))
-(def ex1-rules (first (s/split ex1 #"\n\n")))
+(def ex2 (slurp "./src/advent-of-code-2020/day-19/ex2.txt"))
 
 (defn remap-val [val]
   (if (re-find #"[a-zA-Z]+" val)
@@ -14,59 +12,55 @@
          (map #(read-string (str "[" % "]")))
          (into []))))
 
-
-
 (defn message-validator [text]
   (->> (s/split-lines text)
        (map #(s/split % #": "))
        (map (fn [[key val]] [(read-string key) (remap-val val)]))
        (into (sorted-map))))
 
-(def messages (s/split-lines ex1-messages))
-(def rules (message-validator ex1-rules))
+(def ex1-messages (s/split-lines (second (s/split ex1 #"\n\n"))))
+(def ex1-rules (message-validator (first (s/split ex1 #"\n\n"))))
+(def ex2-messages (s/split-lines (second (s/split ex2 #"\n\n"))))
+(def ex2-rules (message-validator (first (s/split ex2 #"\n\n"))))
+(def inp-messages (s/split-lines (second (s/split inp #"\n\n"))))
+(def inp-rules (message-validator (first (s/split inp #"\n\n"))))
 
-(defn cartesian-prod [colls]
-  (if (empty? colls)
-    '(())
-    (for [more (cartesian-prod (rest colls))
-          x (first colls)]
-      (cons x more))))
+(defn consume-msgs [msgs start paths]
+  (let [next-paths (paths start)]
+    (cond
+      ;; i have no more valid messages to attempt to parse, go back
+      (empty? msgs) nil
 
-(defn insp [n]
-  (do (clojure.pprint/pprint n)
-      n))
+      ;; i hitted the end of the tree nodes, attempt to pop the char from string start
+      (char? next-paths) (for [msg msgs
+                               :when (= next-paths (first msg))]
+                           (rest msg))
 
-(defn all-paths [start-node path]
-  (let [nexts (path start-node)]
-    (if (char? nexts)
-      (str nexts)
-      (->> nexts
-           (mapcat (fn [next]
-                     (->> next
-                          (map #(all-paths % path))
-                          ((fn [ns]
-                             (if (every? char? ns)
-                               (apply str ns)
-                               (map #(apply str %) (cartesian-prod ns))))))))))))
+      :else (mapcat (fn [next-path]
+                      (reduce (fn [msgs node]
+                                (consume-msgs msgs node paths))
+                              msgs
+                              next-path))
+                    next-paths))))
 
+(defn count-valid-msgs [msgs rules]
+  (->> (consume-msgs msgs 0 rules)
+       (filter empty?)
+       (count)))
 
+(count-valid-msgs ex1-messages ex1-rules) ;; 2
+(count-valid-msgs ex2-messages ex2-rules) ;; 3
+(count-valid-msgs inp-messages inp-rules) ;; 156
 
-;; 4 -> [\a]
-;; 5 -> [\b]
-(all-paths 4 rules)
-(all-paths 5 rules)
-;; 2 -> ((\a \a) (\b \b))
-(all-paths 2 rules)
-(all-paths 3 rules)
-;; 1 ->
-(all-paths 1 {0 [[4 1 5]],
-              1 [[2 2] [3 3]],
-              2 [[4 4] [5 5]],
-              3 [[4 5] [5 4]],
-              4 \a,
-              5 \b})
+(defn update-rules [rules]
+  (assoc rules
+         8 [[42] [42 8]]
+         11 [[42 31] [42 11 31]]))
 
+(->> ex2-rules
+     (update-rules)
+     (count-valid-msgs ex2-messages)) ;; 12
 
-(filter (set (all-paths 0 rules)) messages)
-
-
+(->> inp-rules
+     (update-rules)
+     (count-valid-msgs inp-messages)) ;;  363
